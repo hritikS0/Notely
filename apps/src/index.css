@@ -1,0 +1,62 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+@import "quill/dist/quill.snow.css";
+
+:root {
+  color-scheme: dark;
+  --bg: #0e1116;
+  --ink: #e6e8ec;
+  --muted: #9aa3b2;
+  --card: #12161d;
+  --accent: #7c7c7c;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: "DM Sans", system-ui, -apple-system, sans-serif;
+  color: var(--ink);
+  background: #0b0e13;
+}
+
+.rich-editor .ql-toolbar.ql-snow {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: #0e1116;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.rich-editor .ql-container.ql-snow {
+  border-color: rgba(255, 255, 255, 0.1);
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  background: #0e1116;
+}
+
+.rich-editor .ql-editor {
+  min-height: var(--min-h, 180px);
+  color: var(--ink);
+}
+
+.rich-editor .ql-editor.ql-blank::before {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.rich-editor .ql-snow .ql-stroke {
+  stroke: rgba(255, 255, 255, 0.7);
+}
+
+.rich-editor .ql-snow .ql-fill {
+  fill: rgba(255, 255, 255, 0.7);
+}
+
+.rich-editor .ql-snow .ql-picker {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.rich-editor .ql-snow .ql-picker-options {
+  background: #0e1116;
+  border-color: rgba(255, 255, 255, 0.1);
+}
