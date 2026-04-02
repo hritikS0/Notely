@@ -17,7 +17,7 @@ const NewNote = ({ onCreate }) => {
   const close = () => setIsOpen(false);
 
   const onSubmit = async (e) => {
-    e.preventDefault();
+    if (e?.preventDefault) e.preventDefault();
     const cleanedTodos = todos.map((t) => t.trim()).filter(Boolean);
     const payload = {
       ...note,
@@ -74,7 +74,7 @@ const NewNote = ({ onCreate }) => {
               </button>
             </div>
 
-            <form onSubmit={onSubmit} className="flex h-[70vh] flex-col">
+            <form className="flex h-[70vh] flex-col">
               <div className="flex-1 space-y-4 overflow-auto pr-1">
                 <label className="block">
                   <span className="mb-1 block text-sm font-medium text-white/70">
@@ -93,20 +93,26 @@ const NewNote = ({ onCreate }) => {
                   type="text"
                   placeholder="Name"
                   value={note.name}
-                  onChange={(e) => setNote({ ...note, name: e.target.value })}
+                  onChange={(e) =>
+                    setNote((prev) => ({ ...prev, name: e.target.value }))
+                  }
                   className="w-full rounded-md border border-white/10 bg-[#0e1116] px-3 py-2 text-white placeholder:text-white/40"
                 />
                 <input
                   type="text"
                   placeholder="Title"
                   value={note.title}
-                  onChange={(e) => setNote({ ...note, title: e.target.value })}
+                  onChange={(e) =>
+                    setNote((prev) => ({ ...prev, title: e.target.value }))
+                  }
                   className="w-full rounded-md border border-white/10 bg-[#0e1116] px-3 py-2 text-white placeholder:text-white/40"
                 />
                 {noteType === "normal" ? (
                   <RichTextEditor
                     value={note.content}
-                    onChange={(value) => setNote({ ...note, content: value })}
+                    onChange={(value) =>
+                      setNote((prev) => ({ ...prev, content: value }))
+                    }
                     placeholder="Write your note..."
                     minHeight={360}
                   />
@@ -142,7 +148,8 @@ const NewNote = ({ onCreate }) => {
                 )}
               </div>
               <button
-                type="submit"
+                type="button"
+                onClick={onSubmit}
                 className="mt-4 w-full rounded-md bg-white py-2 font-semibold text-black hover:bg-white/90"
               >
                 Save
