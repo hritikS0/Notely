@@ -51,19 +51,19 @@ const NewNote = ({ onCreate }) => {
       <button
         onClick={open}
         aria-label="Create new note"
-        className="fixed bottom-10 right-10 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[conic-gradient(from_180deg_at_50%_50%,#ffffff,#d2d2d2,#ffffff)] text-3xl text-black shadow-[0_12px_28px_rgba(0,0,0,0.4)] ring-1 ring-white/30 transition-transform duration-150 ease-in-out hover:scale-105"
+        className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-[conic-gradient(from_180deg_at_50%_50%,#ffffff,#d2d2d2,#ffffff)] text-2xl text-black shadow-[0_12px_28px_rgba(0,0,0,0.4)] ring-1 ring-white/30 transition-transform duration-150 ease-in-out hover:scale-105 sm:bottom-10 sm:right-10 sm:h-14 sm:w-14 sm:text-3xl"
       > 
         +
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
           <div onClick={close} className="absolute inset-0 bg-black/60" />
 
           <div
             role="dialog"
             aria-modal="true"
-            className="relative z-10 w-full max-w-4xl rounded-2xl border border-white/10 bg-[#10141b] p-6 shadow-2xl"
+            className="relative z-10 w-full max-w-4xl rounded-2xl border border-white/10 bg-[#10141b] p-4 shadow-2xl sm:p-6"
           >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-white">
@@ -74,7 +74,7 @@ const NewNote = ({ onCreate }) => {
               </button>
             </div>
 
-            <form className="flex h-[70vh] flex-col">
+            <form className="flex h-[75vh] flex-col sm:h-[70vh]">
               <div className="flex-1 space-y-4 overflow-auto pr-1">
                 <label className="block">
                   <span className="mb-1 block text-sm font-medium text-white/70">

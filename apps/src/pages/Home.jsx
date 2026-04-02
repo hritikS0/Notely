@@ -113,7 +113,7 @@ const Home = () => {
       </video>
       <div className="pointer-events-none absolute inset-0 bg-[#0b0e13]/70" />
 
-      <div className="relative mx-auto w-full max-w-6xl px-6 pb-24 pt-8">
+      <div className="relative mx-auto w-full max-w-6xl px-4 pb-24 pt-6 sm:px-6 sm:pt-8">
         <Header
           searchValue={searchQuery}
           onSearchChange={setSearchQuery}

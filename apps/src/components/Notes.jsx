@@ -280,13 +280,13 @@ const Notes = ({ note, isLoading, onUpdate, onDelete }) => {
   }
   return (
     <>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 ">
-        {note.map((n, index) => {
-          return (
-            <div key={index}>
-            <div className="group relative h-64 overflow-hidden rounded-xl border border-white/10 bg-[#12161d] p-5 transition-transform duration-150 ease-in-out hover:-translate-y-0.5">
-              <div className="relative h-full">
-                <div className="absolute top-2 right-2 flex items-center gap-2">
+    <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 ">
+      {note.map((n, index) => {
+        return (
+          <div key={index}>
+              <div className="group relative h-48 sm:h-64 overflow-hidden rounded-xl border border-white/10 bg-[#12161d] p-3 sm:p-5 transition-transform duration-150 ease-in-out hover:-translate-y-0.5">
+                <div className="relative h-full">
+                  <div className="absolute top-2 right-2 flex items-center gap-2">
                     <button
                       type="button"
                       className="rounded-full p-1 text-white/70 hover:bg-white/10"
@@ -344,15 +344,15 @@ const Notes = ({ note, isLoading, onUpdate, onDelete }) => {
                     </div>
                   )}
                   <p
-                    className={`text-xs font-semibold uppercase tracking-wide text-white/50 ${n.isCollaborated ? "mt-2" : ""}`}
+                    className={`text-[10px] font-semibold uppercase tracking-wide text-white/50 sm:text-xs ${n.isCollaborated ? "mt-2" : ""}`}
                   >
                     {n.name}
                   </p>
-                  <h2 className="text-xl font-semibold mt-2 text-white">
+                  <h2 className="mt-2 text-lg font-semibold text-white sm:text-xl">
                     {n.title}
                   </h2>
                   {n.type === "todo" ? (
-                    <ul className="mt-3 space-y-2 text-white/70">
+                    <ul className="mt-2 space-y-1 text-white/70 sm:mt-3 sm:space-y-2">
                       {(n.todos && n.todos.length > 0
                         ? n.todos
                         : String(n.content || "")
@@ -362,13 +362,13 @@ const Notes = ({ note, isLoading, onUpdate, onDelete }) => {
                       ).map((item, idx) => (
                         <li key={idx} className="flex items-center gap-2">
                           <span className="h-2 w-2 rounded-full bg-white/40" />
-                          <span className="text-sm">{item}</span>
+                          <span className="text-xs sm:text-sm">{item}</span>
                         </li>
                       ))}
                     </ul>
                   ) : (
                     <div
-                      className="mt-3 text-white/65 leading-relaxed"
+                      className="mt-2 text-xs text-white/65 leading-relaxed sm:mt-3 sm:text-sm"
                       dangerouslySetInnerHTML={{
                         __html: formatContent(n.content || ""),
                       }}
