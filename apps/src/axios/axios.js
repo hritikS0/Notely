@@ -5,7 +5,7 @@ const baseURL =
 
 const axiosInstance = axios.create({
   baseURL,
-  timeout: 1000,
+  timeout: 10000,
   headers: { "X-Custom-Header": "foobar" },
 });
 axiosInstance.interceptors.request.use((config) => {
