@@ -1,11 +1,19 @@
-import React from "react";
+import React, { Suspense, useEffect } from "react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Auth from "./pages/Auth";
-import Home from "./pages/Home";
-import SharedNote from "./pages/SharedNote";
 import { useAuthStore } from "./store/auth.store.js";
+import AppSkeleton from "./components/AppSkeleton";
+
+const lazyWithPreload = (factory) => {
+  const Component = React.lazy(factory);
+  Component.preload = factory;
+  return Component;
+};
+
+const Home = lazyWithPreload(() => import("./pages/Home"));
+const Auth = lazyWithPreload(() => import("./pages/Auth"));
+const SharedNote = lazyWithPreload(() => import("./pages/SharedNote"));
 
 const ProtectedRoutes = ({ children }) => {
   const token = useAuthStore((s) => s.token);
@@ -24,9 +32,21 @@ const PublicOnlyRoutes = ({ children }) => {
 };
 
 const App = () => {
+  useEffect(() => {
+    const preload = () => {
+      Home.preload();
+      SharedNote.preload();
+    };
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(preload);
+    } else {
+      setTimeout(preload, 300);
+    }
+  }, []);
   return (
     <BrowserRouter>
       <ToastContainer position="top-right" autoClose={2500} theme="dark" />
+      <Suspense fallback={<AppSkeleton />}>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route
@@ -56,6 +76,7 @@ const App = () => {
         <Route path="/shared/:token" element={<SharedNote />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+     </Suspense>
     </BrowserRouter>
   )
 }

@@ -50,6 +50,11 @@ const SharedNote = () => {
       </div>
     );
   }
+  const formatContent = (content) => {
+    if (!content) return "";
+    if (/<[a-z][\s\S]*>/i.test(content)) return content;
+    return content.replace(/\n/g, "<br />");
+  };
   const handleJoin = async () => {
     setIsJoining(true);
     const joined = await joinShare(token);
@@ -98,7 +103,12 @@ const SharedNote = () => {
               ))}
           </ul>
         ) : (
-          <p className="mt-6 whitespace-pre-wrap text-white/75">{note.content}</p>
+          <div
+            className="mt-6 text-white/75 leading-relaxed"
+            dangerouslySetInnerHTML={{
+              __html: formatContent(note.content || ""),
+            }}
+          />
         )}
       </div>
     </div>
