@@ -76,10 +76,5 @@ Open `http://localhost:5173`
 
 ---
 
-## Deployment (Free)
-Suggested free stack:
-- Frontend: Vercel
-- Backend: Render
-- Database: MongoDB Atlas
 
-If you want a full step‑by‑step deployment guide for your exact setup, ask and I’ll tailor it.
+
