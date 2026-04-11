@@ -23,8 +23,7 @@ const NewNote = ({ onCreate }) => {
       ...note,
       type: noteType,
       todos: noteType === "todo" ? cleanedTodos : undefined,
-      content:
-        noteType === "todo" ? cleanedTodos.join("\n") : note.content,
+      content: noteType === "todo" ? cleanedTodos.join("\n") : note.content,
     };
     const created = await createNotes(payload);
     if (onCreate) {
@@ -52,7 +51,7 @@ const NewNote = ({ onCreate }) => {
         onClick={open}
         aria-label="Create new note"
         className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-[conic-gradient(from_180deg_at_50%_50%,#ffffff,#d2d2d2,#ffffff)] text-2xl text-black shadow-[0_12px_28px_rgba(0,0,0,0.4)] ring-1 ring-white/30 transition-transform duration-150 ease-in-out hover:scale-105 sm:bottom-10 sm:right-10 sm:h-14 sm:w-14 sm:text-3xl"
-      > 
+      >
         +
       </button>
 
@@ -66,10 +65,11 @@ const NewNote = ({ onCreate }) => {
             className="relative z-10 w-full max-w-4xl rounded-2xl border border-white/10 bg-[#10141b] p-4 shadow-2xl sm:p-6"
           >
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white">
-                Create Note
-              </h2>
-              <button onClick={close} className="text-white/60 hover:text-white">
+              <h2 className="text-xl font-semibold text-white">Create Note</h2>
+              <button
+                onClick={close}
+                className="text-white/60 hover:text-white"
+              >
                 ✕
               </button>
             </div>

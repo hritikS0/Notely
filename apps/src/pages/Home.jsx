@@ -63,7 +63,12 @@ const Home = () => {
 
   useEffect(() => {
     setPage(1);
-  }, [searchQuery, filterValue]);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setPage(1);
+    setIsLoading(true);
+  }, [filterValue]);
 
   useEffect(() => {
     let isActive = true;

@@ -20,8 +20,13 @@ const Notes = ({ note, isLoading, onUpdate, onDelete }) => {
     if (!html) return "";
     if (typeof document === "undefined") return String(html);
     const div = document.createElement("div");
-    div.innerHTML = html;
-    return div.textContent || div.innerText || "";
+    // Add newlines to common block tags before stripping HTML to preserve some breaks
+    let processedHtml = html.replace(/<br\s*\/?>/gi, "\n");
+    processedHtml = processedHtml.replace(/<\/p>/gi, "\n");
+    processedHtml = processedHtml.replace(/<\/div>/gi, "\n");
+    processedHtml = processedHtml.replace(/<\/li>/gi, "\n");
+    div.innerHTML = processedHtml;
+    return (div.textContent || div.innerText || "").trim();
   };
 
   const startEdit = (n, index) => {
@@ -33,7 +38,15 @@ const Notes = ({ note, isLoading, onUpdate, onDelete }) => {
             .map((item) => item.trim())
             .filter(Boolean);
     setEditingId(index);
-    const rawContent = n.content || "";
+    let rawContent = n.content || "";
+    
+    // If the content is purely plain text (no HTML tags) but has newlines, 
+    // Quill will treat \n as whitespace and join them. 
+    // We convert it to HTML breaks so it loads correctly.
+    if (rawContent && !/<[a-z][\s\S]*>/i.test(rawContent)) {
+      rawContent = rawContent.replace(/\n/g, "<br />");
+    }
+    
     const plainContent = stripHtml(rawContent);
     setDraft({
       name: n.name || "",
@@ -77,10 +90,6 @@ const Notes = ({ note, isLoading, onUpdate, onDelete }) => {
   };
   const openFullscreen = (n, index) => {
     if (editingId !== index) startEdit(n, index);
-    setDraft((prev) => ({
-      ...prev,
-      content: prev.contentPlain || prev.content,
-    }));
     setFullscreenId(index);
   };
   const closeFullscreen = () => {
@@ -122,7 +131,9 @@ const Notes = ({ note, isLoading, onUpdate, onDelete }) => {
 
   const formatContent = (content) => {
     if (!content) return "";
+    // If content has block HTML tags, return it directly so dangerouslySetInnerHTML renders it
     if (/<[a-z][\s\S]*>/i.test(content)) return content;
+    // For pure text, replace newlines with line breaks to render properly
     return content.replace(/\n/g, "<br />");
   };
 
@@ -368,7 +379,7 @@ const Notes = ({ note, isLoading, onUpdate, onDelete }) => {
                     </ul>
                   ) : (
                     <div
-                      className="mt-2 text-xs text-white/65 leading-relaxed sm:mt-3 sm:text-sm"
+                      className="mt-2 text-xs text-white/65 leading-relaxed sm:mt-3 sm:text-sm whitespace-pre-wrap ql-editor !p-0"
                       dangerouslySetInnerHTML={{
                         __html: formatContent(n.content || ""),
                       }}

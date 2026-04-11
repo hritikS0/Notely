@@ -10,23 +10,24 @@ class NoteService{
             ...collabNotes.map((n) => n._id),
         ];
 
-        const pins = allNoteIds.length
-            ? await NotePin.find({
-                userId: ownerId,
-                noteId: { $in: allNoteIds },
-            }).lean()
-            : [];
+        const [pins, collaboratorsForOwned] = await Promise.all([
+            allNoteIds.length
+                ? NotePin.find({
+                    userId: ownerId,
+                    noteId: { $in: allNoteIds },
+                }).lean()
+                : [],
+            ownedIds.length
+                ? NoteCollaborator.find({ noteId: { $in: ownedIds } })
+                    .populate("userId", "name email")
+                    .lean()
+                : []
+        ]);
         const pinnedIds = new Set(pins.map((p) => String(p.noteId)));
 
         const roleByNote = new Map(
             collaborations.map((c) => [String(c.noteId), c.role])
         );
-
-        const collaboratorsForOwned = ownedIds.length
-            ? await NoteCollaborator.find({ noteId: { $in: ownedIds } })
-                .populate("userId", "name email")
-                .lean()
-            : [];
 
         const collaboratorNamesByNote = new Map();
         for (const c of collaboratorsForOwned) {
@@ -103,9 +104,10 @@ class NoteService{
     }
 
     async getNotes(ownerId, options = {}){
-        const ownedNotes = await Note.find({ ownerId }).lean();
-
-        const collaborations = await NoteCollaborator.find({ userId: ownerId }).lean();
+        const [ownedNotes, collaborations] = await Promise.all([
+            Note.find({ ownerId }).lean(),
+            NoteCollaborator.find({ userId: ownerId }).lean()
+        ]);
         const collabNoteIds = collaborations.map((c) => c.noteId);
         const collabNotes = collabNoteIds.length
             ? await Note.find({ _id: { $in: collabNoteIds } })
@@ -150,12 +152,24 @@ class NoteService{
         });
         return note;
     }
-    async deleteNote(ownerId,noteId){
-        const note = await Note.findOneAndDelete({ ownerId, _id: noteId });
-        if(!note){
-            throw new Error("Note not found");
+    async deleteNote(userId, noteId) {
+        // Check if user is the owner
+        const note = await Note.findOne({ ownerId: userId, _id: noteId });
+        if (note) {
+            await Note.findByIdAndDelete(noteId);
+            await NoteCollaborator.deleteMany({ noteId });
+            await NotePin.deleteMany({ noteId });
+            return note;
         }
-        return note;
+
+        // If not owner, check if user is a collaborator (to unshare)
+        const collab = await NoteCollaborator.findOneAndDelete({ noteId, userId });
+        if (collab) {
+            await NotePin.deleteOne({ noteId, userId });
+            return collab;
+        }
+
+        throw new Error("Note not found or you are not authorized to delete it");
     }
     async updateNote(ownerId,noteId ,data){
         const existing = await Note.findById(noteId);
@@ -203,9 +217,10 @@ class NoteService{
             ],
         };
 
-        const ownedNotes = await Note.find({ ownerId, ...match }).lean();
-
-        const collaborations = await NoteCollaborator.find({ userId: ownerId }).lean();
+        const [ownedNotes, collaborations] = await Promise.all([
+            Note.find({ ownerId, ...match }).lean(),
+            NoteCollaborator.find({ userId: ownerId }).lean()
+        ]);
         const collabNoteIds = collaborations.map((c) => c.noteId);
         const collabNotes = collabNoteIds.length
             ? await Note.find({ _id: { $in: collabNoteIds }, ...match })

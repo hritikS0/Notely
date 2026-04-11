@@ -8,6 +8,7 @@ const Auth = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [mode, setMode] = useState("login");
+  const [isLoading, setIsLoading] = useState(false);
   const login = useAuthStore((state) => state.login);
   const register = useAuthStore((state) => state.register);
   const isLogin = mode === "login";
@@ -31,6 +32,7 @@ const Auth = () => {
     };
 
     try {
+      setIsLoading(true);
       if (isLogin) {
         await login({ email: payload.email, password: payload.password });
         toast.success("Logged in successfully");
@@ -46,6 +48,8 @@ const Auth = () => {
         error?.message ||
         "Something went wrong";
       toast.error(message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -118,8 +122,10 @@ const Auth = () => {
               <input name="password" type="password" placeholder="••••••••" />
             </label>
 
-            <button className="auth-submit" type="submit">
-              {isLogin ? "Log in" : "Create account"}
+            <button className="auth-submit" type="submit" disabled={isLoading}>
+              {isLoading 
+                ? (isLogin ? "Logging in..." : "Creating account...") 
+                : (isLogin ? "Log in" : "Create account")}
             </button>
 
             <p className="auth-foot">

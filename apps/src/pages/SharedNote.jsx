@@ -65,7 +65,9 @@ const SharedNote = () => {
     }
     navigate("/home");
   };
-
+  const handleLogin = () => {
+    navigate("/login");
+  };
   return (
     <div className="min-h-screen bg-[#0b0e13] px-6 py-16 text-white">
       <div className="mx-auto max-w-2xl rounded-2xl border border-white/10 bg-[#10141b] p-8">
@@ -84,7 +86,12 @@ const SharedNote = () => {
             </button>
           ) : (
             <p className="text-xs uppercase tracking-[0.25em] text-white/40">
-              Log in to join
+              <button
+                onClick={handleLogin}
+                className="cursor-pointer border p-2"
+              >
+                Login to join
+              </button>
             </p>
           )}
         </div>
