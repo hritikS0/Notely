@@ -174,21 +174,7 @@ class NoteService {
       throw new Error("User not found");
     }
 
-    const { name, title, content, type, todos, isTodoCompleted } = data || {};
-
-    if (!name || !title) {
-      throw new Error("Name and title are required");
-    }
-
-    if (type === "todo") {
-      const hasTodos = Array.isArray(todos) && todos.length > 0;
-      const hasContent = typeof content === "string" && content.trim().length > 0;
-      if (!hasTodos && !hasContent) {
-        throw new Error("Todo notes need items or content");
-      }
-    } else if (!content) {
-      throw new Error("Content is required");
-    }
+    const { name = "Untitled", title = "Untitled", content = "", type = "normal", todos, isTodoCompleted } = data || {};
 
     const note = await Note.create({
       ownerId,

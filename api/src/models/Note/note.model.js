@@ -58,19 +58,6 @@ noteSchema.virtual('todoProgress').get(function() {
   return (completed / this.todos.length) * 100;
 });
 
-// Pre-save middleware
-noteSchema.pre('save', function(next) {
-  if (this.type === 'todo') {
-    const hasTodos = this.todos && this.todos.length > 0;
-    const hasContent = this.content && this.content.trim().length > 0;
-    if (!hasTodos && !hasContent) {
-      next(new Error('Todo notes must have either todos or content'));
-    }
-  } else if (this.type === 'normal' && !this.content) {
-    next(new Error('Normal notes must have content'));
-  }
-  next();
-});
 
 const Note = mongoose.model("Note", noteSchema);
 export default Note;

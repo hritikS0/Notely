@@ -27,7 +27,7 @@ class NoteController {
       });
       res.status(201).json(note);
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(400).json({ message: error.message });
     }
   }
   async deleteNote(req, res) {
