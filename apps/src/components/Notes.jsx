@@ -5,10 +5,12 @@ import { createShareLink, createNotes } from "../api/note";
 import { toast } from "react-toastify";
 import RichTextEditor from "./RichTextEditor";
 import { getAvatarUrl } from "../avatar/avatar";
+import { useAuthStore } from "../store/auth.store";
 
 const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNote, onNoteCreated, quickTodoNote, onQuickTodoChanged }) => {
   const QUICK_TODO_KEY = "notely_quick_todo";
   const [draft, setDraft] = useState(null);
+  const { user } = useAuthStore();
   const [quickTodo, setQuickTodo] = useState({
     todos: [{ text: "", completed: false }],
     isTodoCompleted: false,
@@ -25,7 +27,6 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
     if (!html) return "";
     if (typeof document === "undefined") return String(html);
     const div = document.createElement("div");
-    // Add newlines to common block tags before stripping HTML to preserve some breaks
     let processedHtml = html.replace(/<br\s*\/?>/gi, "\n");
     processedHtml = processedHtml.replace(/<\/p>/gi, "\n");
     processedHtml = processedHtml.replace(/<\/div>/gi, "\n");
@@ -61,6 +62,16 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
     }
     const plainContent = stripHtml(rawContent);
 
+    const currentUserId = user?.id || user?._id;
+    let otherPerson = null;
+    if (n.owner && (n.owner._id || n.owner.id || n.owner) !== currentUserId) {
+      otherPerson = n.owner;
+    } else if (n.collaborators && n.collaborators.length > 0) {
+      otherPerson = n.collaborators.find(c => (c._id || c.id || c) !== currentUserId) || n.collaborators[0];
+    } else {
+      otherPerson = n.collaborator;
+    }
+
     setDraft({
       _id: n._id,
       name: n.name || "",
@@ -72,9 +83,9 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
       isTodoCompleted: n.isTodoCompleted || false,
       isPinned: n.isPinned,
       isCollaborated: n.isCollaborated,
-      collaborator: n.owner || n.collaborator || (n.collaborators && n.collaborators[0]) || null,
+      collaborator: otherPerson,
     });
-  }, [selectedNoteId, note]);
+  }, [selectedNoteId, note, user]);
 
   useEffect(() => {
     const todoSource = quickTodoNote || null;
@@ -209,13 +220,10 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
     if (!share?.shareToken) return;
     const url = `${window.location.origin}/shared/${share.shareToken}`;
 
-    // 1. Always copy the link to the clipboard first
     try {
-      // Check if the modern clipboard API is available and we are in a secure context (HTTPS)
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(url);
       } else {
-        // Fallback for non-secure contexts (HTTP)
         const temp = document.createElement("input");
         temp.value = url;
         document.body.appendChild(temp);
@@ -229,7 +237,6 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
       toast.error("Failed to copy link");
     }
 
-    // 2. Then optionally open the native OS share sheet if available
     if (navigator.share) {
       try {
         await navigator.share({
@@ -244,6 +251,7 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
       }
     }
   };
+
   if (isLoading) {
     return (
       <div className="flex h-[60vh] w-full animate-pulse flex-col rounded-2xl border border-gray-200 bg-white dark:border-white/10 dark:bg-[#12161d] p-6">
@@ -281,69 +289,33 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
 
     return (
       <div className="relative flex h-full w-full flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#12161d]">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-gray-500 dark:text-white/40">
+        <div className="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-gray-500 dark:text-white/40">
             <span>Note Editor</span>
+            
+            {/* Improved collaboration badge for all screen sizes */}
             {draft.isCollaborated && (
-              <div className="flex items-center gap-1.5 rounded-full border border-gray-300 bg-gray-100 py-0.5 pl-1 pr-2 dark:border-white/10 dark:bg-white/5">
+              <div className="group relative flex items-center gap-1.5 rounded-full border border-gray-300 bg-gray-100 py-0.5 pl-1 pr-2 dark:border-white/10 dark:bg-white/5">
                 <img
                   src={getAvatarUrl(draft.collaborator?.avatarId || draft.collaborator?._id || draft.collaborator?.id)}
                   alt="Collaborator avatar"
-                  className="h-4 w-4 rounded-full object-cover"
+                  className="h-4 w-4 shrink-0 rounded-full object-cover"
                 />
-                <span className="text-[10px] text-gray-600 dark:text-white/60">
+                {/* Desktop: Show full name */}
+                <span className="hidden text-[10px] text-gray-600 dark:text-white/60 sm:inline-block sm:text-xs">
                   Collaborated with {draft.collaborator?.name || "Someone"}
                 </span>
+                {/* Mobile: Show only first name or initial */}
+                <span className="inline-block text-[10px] text-gray-600 dark:text-white/60 sm:hidden">
+                  with {draft.collaborator?.name?.split(' ')[0] || "Someone"}
+                </span>
+                
+                {/* Tooltip on hover for mobile to show full name */}
+                <div className="pointer-events-none absolute -top-8 left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-gray-700 sm:group-hover:flex">
+                  Collaborated with {draft.collaborator?.name || "Someone"}
+                </div>
               </div>
             )}
-          
-          </div>
-          <div className="flex items-center gap-2">
-            {!showQuickTodo && (
-              <button
-                type="button"
-                className="hidden rounded-md border border-gray-300 px-4 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10 lg:block"
-                onClick={() => setShowQuickTodo(true)}
-              >
-                Show Quick Todo
-              </button>
-            )}
-            <button
-              type="button"
-              className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-white/70 dark:hover:bg-white/10"
-              aria-label="Share note"
-              onClick={() => handleShare(draft._id)}
-            >
-              <FaShareAlt />
-            </button>
-            <button
-              type="button"
-              className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-white/70 dark:hover:bg-white/10"
-              aria-label="Delete note"
-              onClick={() => {
-                onDelete(draft._id);
-                if (onSelectNote) onSelectNote(null);
-              }}
-            >
-              <MdDelete className="text-xl" />
-            </button>
-            <button
-              type="button"
-              className="ml-2 rounded-md border border-gray-300 px-4 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10"
-              onClick={saveEdit}
-            >
-              Save
-            </button>
-            <button
-              type="button"
-              className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-white/70 dark:hover:bg-white/10"
-              aria-label="Close"
-              onClick={() => {
-                if (onSelectNote) onSelectNote(null);
-              }}
-            >
-              <MdClose className="text-xl" />
-            </button>
           </div>
         </div>
 
@@ -375,7 +347,7 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
                     onChange={(e) => setDraft(prev => prev ? { ...prev, isTodoCompleted: e.target.checked } : null)}
                     className="h-4 w-4 rounded border-gray-300 text-green-500 focus:ring-green-500"
                   />
-                  Mark entire list as completed
+                  <span className="text-xs sm:text-sm">Mark entire list as completed</span>
                 </label>
               </div>
               {draft.todos.map((todo, idx) => (
@@ -394,13 +366,13 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
                     value={todo.text}
                     onChange={(e) => updateTodo(idx, e.target.value)}
                     placeholder={`Todo ${idx + 1}`}
-                    className={`w-full bg-transparent text-base outline-none placeholder:text-gray-400 dark:placeholder:text-white/30 ${(draft.isTodoCompleted || todo.completed) ? 'text-gray-400 line-through dark:text-white/40' : 'text-gray-700 dark:text-white/70'}`}
+                    className={`w-full bg-transparent text-sm sm:text-base outline-none placeholder:text-gray-400 dark:placeholder:text-white/30 ${(draft.isTodoCompleted || todo.completed) ? 'text-gray-400 line-through dark:text-white/40' : 'text-gray-700 dark:text-white/70'}`}
                     onKeyDown={handleKeySave}
                   />
                   <button
                     type="button"
                     onClick={() => removeTodo(idx)}
-                    className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-500 transition-colors hover:bg-gray-100 dark:border-white/10 dark:text-white/60 dark:hover:bg-white/10"
+                    className="rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-500 transition-colors hover:bg-gray-100 dark:border-white/10 dark:text-white/60 dark:hover:bg-white/10 sm:px-3 sm:py-1.5"
                     aria-label="Remove todo"
                   >
                     –
@@ -410,7 +382,7 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
               <button
                 type="button"
                 onClick={addTodo}
-                className="mt-4 w-full rounded-md border border-gray-300 bg-gray-50 py-3 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:text-white/70 dark:hover:bg-white/10"
+                className="mt-4 w-full rounded-md border border-gray-300 bg-gray-50 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:text-white/70 dark:hover:bg-white/10 sm:py-3"
               >
                 + Add another item
               </button>
@@ -428,12 +400,60 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
             </div>
           )}
         </form>
+
+        <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-gray-100 pt-4 dark:border-white/10 sm:w-auto">
+          {!showQuickTodo && (
+            <button
+              type="button"
+              className="hidden rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10 sm:px-4 lg:block"
+              onClick={() => setShowQuickTodo(true)}
+            >
+              Show Quick Todo
+            </button>
+          )}
+          <button
+            type="button"
+            className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-white/70 dark:hover:bg-white/10"
+            aria-label="Share note"
+            onClick={() => handleShare(draft._id)}
+          >
+            <FaShareAlt className="text-sm sm:text-base" />
+          </button>
+          <button
+            type="button"
+            className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-white/70 dark:hover:bg-white/10"
+            aria-label="Delete note"
+            onClick={() => {
+              onDelete(draft._id);
+              if (onSelectNote) onSelectNote(null);
+            }}
+          >
+            <MdDelete className="text-lg sm:text-xl" />
+          </button>
+          <button
+            type="button"
+            className="ml-2 rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10 sm:px-4"
+            onClick={saveEdit}
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-white/70 dark:hover:bg-white/10"
+            aria-label="Close"
+            onClick={() => {
+              if (onSelectNote) onSelectNote(null);
+            }}
+          >
+            <MdClose className="text-lg sm:text-xl" />
+          </button>
+        </div>
       </div>
     );
   };
 
   return (
-    <div className={`grid w-full grid-cols-1 gap-6 ${showQuickTodo ? "lg:grid-cols-[minmax(0,1fr)_360px]" : "lg:grid-cols-1"}`}>
+    <div className={`grid w-full grid-cols-1 gap-4 sm:gap-6 ${showQuickTodo ? "lg:grid-cols-[minmax(0,1fr)_360px]" : "lg:grid-cols-1"}`}>
       {/* Note Editor - fills remaining space */}
       <div className="min-w-0">
         <div className="h-[60vh] min-h-[400px] lg:h-[calc(100vh-200px)]">
@@ -446,7 +466,7 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
         <button
           type="button"
           onClick={() => setShowQuickTodo(!showQuickTodo)}
-          className="w-full rounded-2xl border border-gray-200 bg-white px-6 py-4 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:border-white/10 dark:bg-[#12161d] dark:text-white/70 dark:hover:bg-white/5"
+          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:border-white/10 dark:bg-[#12161d] dark:text-white/70 dark:hover:bg-white/5 sm:px-6 sm:py-4"
         >
           {showQuickTodo ? "Hide Quick Todo" : "Open Quick Todo"}
         </button>
@@ -454,35 +474,17 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
 
       {/* Quick Todo - stays to the right on desktop, hidden/shown on mobile */}
       <div className={`${showQuickTodo ? "block" : "hidden"}`}>
-        <div className="sticky top-4 h-[50vh] min-h-[400px] w-full overflow-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#12161d] lg:h-[calc(100vh-200px)]">
+        <div className="sticky top-4 flex h-[50vh] min-h-[400px] w-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-2xl dark:border-white/10 dark:bg-[#12161d] sm:p-6 lg:h-[calc(100vh-200px)]">
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-gray-500 dark:text-white/40">
               <span>Quick Todo</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="rounded-md border border-gray-300 px-4 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10"
-                onClick={handleQuickTodoSave}
-              >
-                Save
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowQuickTodo(false)}
-                className="hidden items-center justify-center rounded-md border border-transparent p-1.5 text-gray-400 transition-colors hover:bg-gray-100 dark:text-white/40 dark:hover:bg-white/10 lg:flex"
-                aria-label="Hide Quick Todo"
-              >
-                <MdClose className="text-lg" />
-              </button>
             </div>
           </div>
           
           <form className="flex-1 overflow-auto" onSubmit={handleQuickTodoSave}>
             <div className="mt-2 space-y-3">
-             
               {quickTodo.todos.map((todo, idx) => (
-                <div key={idx} className="flex items-start gap-3">
+                <div key={idx} className="flex items-start gap-2 sm:gap-3">
                   <button
                     type="button" 
                     onClick={() => {
@@ -507,7 +509,7 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
                       }));
                     }}
                     placeholder={`Todo ${idx + 1}`}
-                    className={`w-full bg-transparent text-base outline-none placeholder:text-gray-400 dark:placeholder:text-white/30 ${(quickTodo.isTodoCompleted || todo.completed) ? 'text-gray-400 line-through dark:text-white/40' : 'text-gray-700 dark:text-white/70'}`}
+                    className={`w-full bg-transparent text-sm sm:text-base outline-none placeholder:text-gray-400 dark:placeholder:text-white/30 ${(quickTodo.isTodoCompleted || todo.completed) ? 'text-gray-400 line-through dark:text-white/40' : 'text-gray-700 dark:text-white/70'}`}
                   />
                   <button
                     type="button"
@@ -517,7 +519,7 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
                         return { ...prev, todos: prev.todos.filter((_, i) => i !== idx) };
                       });
                     }}
-                    className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-500 transition-colors hover:bg-gray-100 dark:border-white/10 dark:text-white/60 dark:hover:bg-white/10"
+                    className="rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-500 transition-colors hover:bg-gray-100 dark:border-white/10 dark:text-white/60 dark:hover:bg-white/10 sm:px-3 sm:py-1.5"
                     aria-label="Remove todo"
                   >
                     –
@@ -529,12 +531,30 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
                 onClick={() => {
                   setQuickTodo(prev => ({ ...prev, todos: [...prev.todos, { text: "", completed: false }] }));
                 }}
-                className="mt-4 w-full rounded-md border border-gray-300 bg-gray-50 py-3 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:text-white/70 dark:hover:bg-white/10"
+                className="mt-4 w-full rounded-md border border-gray-300 bg-gray-50 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:text-white/70 dark:hover:bg-white/10 sm:py-3"
               >
                 + Add another item
               </button>
             </div>
           </form>
+
+          <div className="mt-4 flex items-center justify-end gap-2 border-t border-gray-100 pt-4 dark:border-white/10">
+            <button
+              type="button"
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10 sm:px-4"
+              onClick={handleQuickTodoSave}
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowQuickTodo(false)}
+              className="hidden items-center justify-center rounded-md border border-transparent p-1.5 text-gray-400 transition-colors hover:bg-gray-100 dark:text-white/40 dark:hover:bg-white/10 lg:flex"
+              aria-label="Hide Quick Todo"
+            >
+              <MdClose className="text-lg" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
