@@ -4,6 +4,7 @@ import Quill from "quill";
 const TOOLBAR = [
   [{ header: [1, 2, 3, false] }],
   ["bold", "italic", "underline", "strike"],
+  [{ color: [] }, { background: [] }],
   [{ list: "ordered" }, { list: "bullet" }],
   [{ align: [] }],
   ["blockquote", "code-block"],

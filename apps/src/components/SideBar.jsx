@@ -3,11 +3,20 @@ import { FaRegUserCircle, FaSearch, FaChevronLeft, FaChevronRight, FaStickyNote,
 import { toast } from "react-toastify";
 import { useAuthStore } from "../store/auth.store";
 import { getAvatarUrl } from "../avatar/avatar";
+import ProfileDropDown from "./ProfileDropDown";
 
 const Sidebar = ({ notes = [], selectedNoteId, onSelectNote, searchValue, onSearchChange, onUpdate }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth < 1024;
+    }
+    return false;
+  });
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const {user} = useAuthStore(s => s);
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
+  const toggleProfile = () => setIsProfileOpen(!isProfileOpen);
+  const closeProfile = () => setIsProfileOpen(false);
   const avatarUrl = getAvatarUrl(user?.avatarId || user?.id || user?._id);
 
   useEffect(() => {
@@ -18,6 +27,14 @@ const Sidebar = ({ notes = [], selectedNoteId, onSelectNote, searchValue, onSear
     );
   }, [isCollapsed]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) setIsCollapsed(true);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const stripHtml = (html) => {
     if (!html) return "";
     return html.replace(/<[^>]*>?/gm, '');
@@ -25,7 +42,7 @@ const Sidebar = ({ notes = [], selectedNoteId, onSelectNote, searchValue, onSear
 
   return (
     <aside
-      className={`fixed left-0 top-0 z-50 h-full border-r border-gray-200 bg-white dark:border-white/10 dark:bg-[#10141b] transition-all duration-300 ease-in-out ${
+      className={`fixed left-0 top-0 z-50 flex h-full flex-col border-r border-gray-200 bg-white transition-all duration-300 ease-in-out dark:border-white/10 dark:bg-[#10141b] ${
         isCollapsed ? "w-20" : "w-80"
       }`}
     >
@@ -37,7 +54,7 @@ const Sidebar = ({ notes = [], selectedNoteId, onSelectNote, searchValue, onSear
         {isCollapsed ? <FaChevronRight className="text-xs" /> : <FaChevronLeft className="text-xs" />}
       </button>
 
-      <div className={`flex h-full flex-col gap-6 overflow-x-hidden overflow-y-auto py-6 ${isCollapsed ? "items-center px-2" : "px-4"}`}>
+      <div className={`flex flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden py-6 ${isCollapsed ? "items-center px-2" : "px-4"}`}>
       {isCollapsed ? (
         <>
           {/* Logo - collapsed */}
@@ -102,17 +119,6 @@ const Sidebar = ({ notes = [], selectedNoteId, onSelectNote, searchValue, onSear
             {notes.length === 0 && (
               <p className="text-[10px] text-gray-400 dark:text-white/30 text-center">No notes</p>
             )}
-          </div>
-
-          {/* User Icon - collapsed */}
-          <div className="mt-auto flex flex-col items-center gap-3 border-t border-gray-200 dark:border-white/10 pt-4">
-            <button>
-              <img 
-                src={avatarUrl} 
-                alt="Profile" 
-                className="h-7 w-7 rounded-full border border-gray-200 object-cover dark:border-white/10" 
-              />
-            </button>
           </div>
 
         </>
@@ -202,9 +208,28 @@ const Sidebar = ({ notes = [], selectedNoteId, onSelectNote, searchValue, onSear
               )}
             </div>
           </div>
+        </div>
+      )}
+      </div>
 
-          {/* User Profile Section at Bottom */}
-          <div className="mt-auto flex items-center gap-3 border-t border-gray-200 dark:border-white/10 pt-4">
+      {/* Fixed User Profile Footer */}
+      <div className={`relative border-t border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-[#10141b] ${isCollapsed ? "flex justify-center" : ""}`}>
+        {isCollapsed ? (
+          <>
+            <button onClick={toggleProfile}>
+              <img 
+                src={avatarUrl} 
+                alt="Profile" 
+                className="h-8 w-8 rounded-full border border-gray-200 object-cover transition-all hover:ring-2 hover:ring-[#2dd4bf] dark:border-white/10" 
+              />
+            </button>
+            <ProfileDropDown isOpen={isProfileOpen} onClose={closeProfile} className="absolute bottom-2 left-full ml-4" />
+          </>
+        ) : (
+          <div 
+            className="-mx-2 flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
+            onClick={toggleProfile}
+          >
             <button>
               <img 
                 src={avatarUrl} 
@@ -212,13 +237,13 @@ const Sidebar = ({ notes = [], selectedNoteId, onSelectNote, searchValue, onSear
                 className="h-9 w-9 rounded-full border border-gray-200 object-cover dark:border-white/10" 
               />
             </button>
-            <div>
-              <p className="text-xs uppercase tracking-widest text-gray-500 dark:text-white/40">Signed in</p>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.name || "Guest"}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-white/40">Signed in</p>
+              <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{user?.name || "Guest"}</p>
             </div>
+            <ProfileDropDown isOpen={isProfileOpen} onClose={closeProfile} className="absolute bottom-full left-4 mb-2" />
           </div>
-        </div>
-      )}
+        )}
       </div>
     </aside>
   );

@@ -46,7 +46,9 @@ export const useAuthStore = create((set) => ({
     return response.data;
   },
   updateAvatar: async (avatarId) => {
-    await axios.put("/auth/avatar", { avatarId });
+    const user = getStoredUser();
+    const userId = user?.id || user?._id || user?.user_id;
+    await axios.put("/auth/avatar", { avatarId, userId });
     set((state) => {
       if (!state.user) return state;
       const updatedUser = { ...state.user, avatarId };

@@ -38,6 +38,9 @@ body {
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
   transition: all 0.3s ease;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .dark .rich-editor .ql-toolbar.ql-snow {

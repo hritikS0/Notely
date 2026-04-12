@@ -27,6 +27,7 @@ class AuthService {
       user_id: user._id,
       name,
       email,
+      avatarId: user.avatarId,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
@@ -49,6 +50,7 @@ class AuthService {
       user_id: user._id,
       name: user.name,
       email: user.email,
+      avatarId: user.avatarId,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       token: generatedToken

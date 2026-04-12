@@ -6,6 +6,7 @@ const noteSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
     name: {
       type: String,
@@ -22,7 +23,10 @@ const noteSchema = new mongoose.Schema(
       default: "",
     },
     todos: {
-      type: [String],
+      type: [{
+        text: String,
+        completed: Boolean,
+      }],
       default: [],
     },
     isTodoCompleted: {
@@ -35,8 +39,38 @@ const noteSchema = new mongoose.Schema(
       default: "normal",
     },
   },
-  { timestamps: true }
+  { 
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+  }
 );
+
+// Indexes for better performance
+noteSchema.index({ ownerId: 1, updatedAt: -1 });
+noteSchema.index({ ownerId: 1, type: 1 });
+noteSchema.index({ name: "text", title: "text", content: "text" });
+
+// Virtual for todo completion progress
+noteSchema.virtual('todoProgress').get(function() {
+  if (this.type !== 'todo' || !this.todos.length) return 0;
+  const completed = this.todos.filter(todo => todo.completed).length;
+  return (completed / this.todos.length) * 100;
+});
+
+// Pre-save middleware
+noteSchema.pre('save', function(next) {
+  if (this.type === 'todo') {
+    const hasTodos = this.todos && this.todos.length > 0;
+    const hasContent = this.content && this.content.trim().length > 0;
+    if (!hasTodos && !hasContent) {
+      next(new Error('Todo notes must have either todos or content'));
+    }
+  } else if (this.type === 'normal' && !this.content) {
+    next(new Error('Normal notes must have content'));
+  }
+  next();
+});
 
 const Note = mongoose.model("Note", noteSchema);
 export default Note;

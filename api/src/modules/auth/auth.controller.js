@@ -28,8 +28,8 @@ class AuthController {
   }
   async updateAvatar(req, res) {
     try {
-      const { avatarId } = req.body;
-      const idToUpdate = req.userId;
+      const { avatarId, userId } = req.body;
+      const idToUpdate = req.userId || userId;
 
       if (!idToUpdate) {
         return res.status(401).json({ message: "Not authorized" });

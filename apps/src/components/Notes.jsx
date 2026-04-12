@@ -14,6 +14,12 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
     isTodoCompleted: false,
   });
   const [quickTodoId, setQuickTodoId] = useState(null);
+  const [showQuickTodo, setShowQuickTodo] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth >= 1024;
+    }
+    return true;
+  });
 
   const stripHtml = (html) => {
     if (!html) return "";
@@ -251,6 +257,15 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
               ? "Start with a quick thought, a to-do, or a tiny spark." 
               : "Select a note from the sidebar to view or edit."}
           </p>
+            {!showQuickTodo && (
+              <button
+                type="button"
+                onClick={() => setShowQuickTodo(true)}
+                className="mt-6 hidden rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10 lg:block"
+              >
+                Show Quick Todo
+              </button>
+            )}
         </div>
       );
     }
@@ -275,6 +290,15 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
           
           </div>
           <div className="flex items-center gap-2">
+            {!showQuickTodo && (
+              <button
+                type="button"
+                className="hidden rounded-md border border-gray-300 px-4 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10 lg:block"
+                onClick={() => setShowQuickTodo(true)}
+              >
+                Show Quick Todo
+              </button>
+            )}
             <button
               type="button"
               className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-white/70 dark:hover:bg-white/10"
@@ -400,28 +424,49 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
   };
 
   return (
-    <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+    <div className={`grid w-full grid-cols-1 gap-6 ${showQuickTodo ? "lg:grid-cols-[minmax(0,1fr)_360px]" : "lg:grid-cols-1"}`}>
       {/* Note Editor - fills remaining space */}
       <div className="min-w-0">
-        <div className="h-[calc(100vh-200px)] min-h-100">
+        <div className="h-[60vh] min-h-[400px] lg:h-[calc(100vh-200px)]">
           {renderEditorOrEmpty()}
         </div>
       </div>
 
-      {/* Quick Todo - stays to the right */}
-      <div>
-        <div className="sticky top-4 h-[calc(100vh-200px)] min-h-100 w-full rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#12161d] overflow-auto">
+      {/* Mobile Quick Todo Toggle */}
+      <div className="lg:hidden">
+        <button
+          type="button"
+          onClick={() => setShowQuickTodo(!showQuickTodo)}
+          className="w-full rounded-2xl border border-gray-200 bg-white px-6 py-4 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:border-white/10 dark:bg-[#12161d] dark:text-white/70 dark:hover:bg-white/5"
+        >
+          {showQuickTodo ? "Hide Quick Todo" : "Open Quick Todo"}
+        </button>
+      </div>
+
+      {/* Quick Todo - stays to the right on desktop, hidden/shown on mobile */}
+      <div className={`${showQuickTodo ? "block" : "hidden"}`}>
+        <div className="sticky top-4 h-[50vh] min-h-[400px] w-full overflow-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#12161d] lg:h-[calc(100vh-200px)]">
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-gray-500 dark:text-white/40">
               <span>Quick Todo</span>
             </div>
-            <button
-              type="button"
-              className="rounded-md border border-gray-300 px-4 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10"
-              onClick={handleQuickTodoSave}
-            >
-              Save
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-gray-300 px-4 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10"
+                onClick={handleQuickTodoSave}
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowQuickTodo(false)}
+                className="hidden items-center justify-center rounded-md border border-transparent p-1.5 text-gray-400 transition-colors hover:bg-gray-100 dark:text-white/40 dark:hover:bg-white/10 lg:flex"
+                aria-label="Hide Quick Todo"
+              >
+                <MdClose className="text-lg" />
+              </button>
+            </div>
           </div>
           
           <form className="flex-1 overflow-auto" onSubmit={handleQuickTodoSave}>

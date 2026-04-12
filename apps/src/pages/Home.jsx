@@ -110,13 +110,13 @@ const Home = () => {
   }, [searchQuery, filterValue, page]);
 
   const handleUpdate = async (id, updated) => {
+    // Optimistically update local notes state for seamless instant feedback
+    setNotes((prev) =>
+      prev.map((n) => (n._id === id ? { ...n, ...updated } : n))
+    );
+
     await updateNote(id, updated);
     if (Object.keys(updated || {}).length === 1 && "isPinned" in updated) {
-      setNotes((prev) =>
-        prev.map((n) =>
-          n._id === id ? { ...n, isPinned: updated.isPinned } : n
-        )
-      );
       return;
     }
     toast.success("Note updated successfully");
@@ -124,12 +124,14 @@ const Home = () => {
       await loadQuickTodo();
       return;
     }
-    await loadNotes();
+    // Fetch silently in background without triggering loading skeleton
+    await loadNotes({ debounced: true });
   };
   const handleDelete = async(id)=>{
+    setNotes((prev) => prev.filter((n) => n._id !== id));
     await deleteNote(id);
     toast.success("Note deleted successfully");
-    await loadNotes();
+    await loadNotes({ debounced: true });
   }
   const handlePageChange = (nextPage) => {
     setIsPageLoading(true);
@@ -153,7 +155,8 @@ const Home = () => {
       setPage(1);
 
       // Ensure the list reloads immediately with empty filters
-      await loadNotes({ nextPage: 1, nextSearch: "", nextFilter: "all" });
+      // Skip loading skeleton for seamless creation
+      await loadNotes({ nextPage: 1, nextSearch: "", nextFilter: "all", debounced: true });
 
       // Safely extract the new note's ID from various common API response structures
       const newNote = res?.data?.note || res?.data || res?.note || res;
@@ -216,7 +219,7 @@ const Home = () => {
               setSearchQuery("");
               setFilterValue("all");
               setPage(1);
-              await loadNotes({ nextPage: 1, nextSearch: "", nextFilter: "all" });
+            await loadNotes({ nextPage: 1, nextSearch: "", nextFilter: "all", debounced: true });
             }}
           />
         </div>

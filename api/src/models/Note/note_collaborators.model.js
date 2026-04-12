@@ -6,11 +6,13 @@ const noteCollaboratorsSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Note",
       required: true,
+      index: true,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
     role: {
       type: String,
@@ -25,6 +27,8 @@ const noteCollaboratorsSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Compound unique index
 noteCollaboratorsSchema.index({ noteId: 1, userId: 1 }, { unique: true });
 
-export default mongoose.model("NoteCollaborator", noteCollaboratorsSchema);
+const NoteCollaborator = mongoose.model("NoteCollaborator", noteCollaboratorsSchema);
+export default NoteCollaborator;
