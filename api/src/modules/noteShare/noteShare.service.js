@@ -5,8 +5,20 @@ import NoteCollaborator from "../../models/Note/note_collaborators.model.js";
 
 class NoteShareService {
   async createShare(ownerId, noteId, expiresAt) {
-    const note = await Note.findOne({ _id: noteId, ownerId });
+    if (!noteId) throw new Error("noteId is required");
+
+    const note = await Note.findById(noteId);
     if (!note) throw new Error("Note not found");
+
+    const isOwner = String(note.ownerId) === String(ownerId);
+    if (!isOwner) {
+      const collab = await NoteCollaborator.findOne({
+        noteId,
+        userId: ownerId,
+        role: "editor",
+      });
+      if (!collab) throw new Error("Not authorized");
+    }
 
     const shareToken = crypto.randomBytes(24).toString("hex");
     const share = await NoteShare.create({

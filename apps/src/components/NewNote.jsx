@@ -11,14 +11,17 @@ const NewNote = ({ onCreate }) => {
     content: "",
     type: "normal",
   });
-  const [todos, setTodos] = useState([""]);
+  const [todos, setTodos] = useState([{ text: "", completed: false }]);
 
   const open = () => setIsOpen(true);
   const close = () => setIsOpen(false);
 
   const onSubmit = async (e) => {
     if (e?.preventDefault) e.preventDefault();
-    const cleanedTodos = todos.map((t) => t.trim()).filter(Boolean);
+    const cleanedTodos = (todos || [])
+      .map((t) => (typeof t === "string" ? t : t?.text || ""))
+      .map((text) => String(text).trim())
+      .filter(Boolean);
     const payload = {
       ...note,
       type: noteType,
@@ -30,17 +33,17 @@ const NewNote = ({ onCreate }) => {
       onCreate(created || payload);
     }
     setNote({ name: "", title: "", content: "", type: "normal" });
-    setTodos([""]);
+    setTodos([{ text: "", completed: false }]);
     setNoteType("normal");
     close();
   };
-  const updateTodo = (index, value) => {
-    setTodos((prev) => prev.map((t, i) => (i === index ? value : t)));
+  const updateTodo = (index, text) => {
+    setTodos((prev) => prev.map((t, i) => (i === index ? { ...t, text } : t)));
   };
-  const addTodo = () => setTodos((prev) => [...prev, ""]);
+  const addTodo = () => setTodos((prev) => [...prev, { text: "", completed: false }]);
   const removeTodo = (index) => {
     setTodos((prev) => {
-      if (prev.length === 1) return [""];
+      if (prev.length === 1) return [{ text: "", completed: false }];
       return prev.filter((_, i) => i !== index);
     });
   };
@@ -62,13 +65,13 @@ const NewNote = ({ onCreate }) => {
           <div
             role="dialog"
             aria-modal="true"
-            className="relative z-10 w-full max-w-4xl rounded-2xl border border-white/10 bg-[#10141b] p-4 shadow-2xl sm:p-6"
+            className="relative z-10 w-full max-w-4xl rounded-2xl border border-gray-200 bg-white dark:border-white/10 dark:bg-[#10141b] p-4 shadow-2xl sm:p-6"
           >
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white">Create Note</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Create Note</h2>
               <button
                 onClick={close}
-                className="text-white/60 hover:text-white"
+                className="text-gray-500 hover:text-gray-900 dark:text-white/60 dark:hover:text-white"
               >
                 ✕
               </button>
@@ -77,13 +80,13 @@ const NewNote = ({ onCreate }) => {
             <form className="flex h-[75vh] flex-col sm:h-[70vh]">
               <div className="flex-1 space-y-4 overflow-auto pr-1">
                 <label className="block">
-                  <span className="mb-1 block text-sm font-medium text-white/70">
+                  <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-white/70">
                     Note type
                   </span>
                   <select
                     value={noteType}
                     onChange={(e) => setNoteType(e.target.value)}
-                    className="w-full rounded-md border border-white/10 bg-[#0e1116] px-3 py-2 text-white"
+                    className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 dark:border-white/10 dark:bg-[#0e1116] dark:text-white"
                   >
                     <option value="normal">Normal note</option>
                     <option value="todo">Todo list</option>
@@ -96,7 +99,7 @@ const NewNote = ({ onCreate }) => {
                   onChange={(e) =>
                     setNote((prev) => ({ ...prev, name: e.target.value }))
                   }
-                  className="w-full rounded-md border border-white/10 bg-[#0e1116] px-3 py-2 text-white placeholder:text-white/40"
+                  className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 placeholder:text-gray-400 dark:border-white/10 dark:bg-[#0e1116] dark:text-white dark:placeholder:text-white/40"
                 />
                 <input
                   type="text"
@@ -105,7 +108,7 @@ const NewNote = ({ onCreate }) => {
                   onChange={(e) =>
                     setNote((prev) => ({ ...prev, title: e.target.value }))
                   }
-                  className="w-full rounded-md border border-white/10 bg-[#0e1116] px-3 py-2 text-white placeholder:text-white/40"
+                  className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 placeholder:text-gray-400 dark:border-white/10 dark:bg-[#0e1116] dark:text-white dark:placeholder:text-white/40"
                 />
                 {noteType === "normal" ? (
                   <RichTextEditor
@@ -120,17 +123,18 @@ const NewNote = ({ onCreate }) => {
                   <div className="space-y-3">
                     {todos.map((todo, index) => (
                       <div key={index} className="flex items-center gap-2">
+                        <span className="h-4 w-4 rounded-sm border border-gray-400 dark:border-white/40 flex-shrink-0" />
                         <input
                           type="text"
                           placeholder={`Todo ${index + 1}`}
-                          value={todo}
+                          value={todo.text}
                           onChange={(e) => updateTodo(index, e.target.value)}
-                          className="w-full rounded-md border border-white/10 bg-[#0e1116] px-3 py-2 text-white placeholder:text-white/40"
+                          className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 placeholder:text-gray-400 dark:border-white/10 dark:bg-[#0e1116] dark:text-white dark:placeholder:text-white/40"
                         />
                         <button
                           type="button"
                           onClick={() => removeTodo(index)}
-                          className="rounded-md border border-white/10 px-2 py-2 text-sm text-white/60 hover:bg-white/10"
+                          className="rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:border-white/10 dark:text-white/60 dark:hover:bg-white/10"
                           aria-label="Remove todo"
                         >
                           –
@@ -140,7 +144,7 @@ const NewNote = ({ onCreate }) => {
                     <button
                       type="button"
                       onClick={addTodo}
-                      className="w-full rounded-md border border-white/10 bg-white/5 py-2 text-sm font-semibold text-white/70 hover:bg-white/10"
+                      className="w-full rounded-md border border-gray-300 bg-gray-100 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white/70 dark:hover:bg-white/10"
                     >
                       Add another item
                     </button>
@@ -150,7 +154,7 @@ const NewNote = ({ onCreate }) => {
               <button
                 type="button"
                 onClick={onSubmit}
-                className="mt-4 w-full rounded-md bg-white py-2 font-semibold text-black hover:bg-white/90"
+                className="mt-4 w-full rounded-md bg-gray-900 dark:bg-white py-2 font-semibold text-white dark:text-black hover:bg-gray-800 dark:hover:bg-white/90 transition-colors"
               >
                 Save
               </button>

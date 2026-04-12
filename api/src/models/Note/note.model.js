@@ -25,6 +25,10 @@ const noteSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    isTodoCompleted: {
+      type: Boolean,
+      default: false,
+    },
     type: {
       type: String,
       enum: ["normal", "todo"],

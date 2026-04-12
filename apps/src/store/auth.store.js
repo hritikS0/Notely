@@ -13,9 +13,10 @@ const getStoredUser = () => {
 const pickUser = (data) => {
   const source = data?.user ?? data ?? {};
   const user = {
-    id: source._id || source.id || null,
+    id: source._id || source.id || source.user_id || null,
     name: source.name || null,
     email: source.email || null,
+    avatarId: source.avatarId || null,
   };
   return user.name || user.email || user.id ? user : null;
 };
@@ -43,6 +44,15 @@ export const useAuthStore = create((set) => ({
     if (user) localStorage.setItem("user", JSON.stringify(user));
     set({ user, token });
     return response.data;
+  },
+  updateAvatar: async (avatarId) => {
+    await axios.put("/auth/avatar", { avatarId });
+    set((state) => {
+      if (!state.user) return state;
+      const updatedUser = { ...state.user, avatarId };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      return { user: updatedUser };
+    });
   },
   logout: () => {
     localStorage.removeItem("access_token");

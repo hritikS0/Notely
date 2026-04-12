@@ -126,7 +126,7 @@ class NoteService{
         return this.paginate(sorted, options);
     }
     async createNote(ownerId, data){
-        const { name, title, content, type, todos } = data || {};
+        const { name, title, content, type, todos, isTodoCompleted } = data || {};
         if(!name || !title){
             throw new Error("Name and title are required");
         }
@@ -146,6 +146,7 @@ class NoteService{
             ownerId,
             name,
             title,
+            isTodoCompleted : type === "todo" ? (isTodoCompleted || false) : undefined,
             content: content || "",
             type: type || "normal",
             todos: Array.isArray(todos) ? todos : [],

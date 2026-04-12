@@ -59,9 +59,19 @@ class AuthService {
     }
   
   }
-  // Logout
 
-  
+  async updateAvatar(userId, avatarId) {
+    try {
+      const user = await User.findById(userId);
+      if (!user)  throw new Error("User not found");
+      user.avatarId = avatarId;
+      await user.save();
+      return { message: "Avatar updated successfully"}
+    }
+      catch (error) {
+        console.log(error);
+        throw error;
+      }
 }
-
+}
 export default new AuthService();

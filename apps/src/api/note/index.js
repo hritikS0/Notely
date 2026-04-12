@@ -52,6 +52,7 @@ export const createShareLink = async(noteId)=>{
         return res.data
     } catch (error) {
         console.log(error);
+        throw error;
     }
 }
 

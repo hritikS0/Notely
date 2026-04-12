@@ -9,11 +9,15 @@ const userSchema = new mongoose.Schema({
     email:{
         type:String,
         required:true,
-        unque:true
+        unique:true
     },
     password:{
         type:String,
         required:true
+    },
+    avatarId:{
+        type:String,
+        default:null
     }
 },{timestamps:true});
 

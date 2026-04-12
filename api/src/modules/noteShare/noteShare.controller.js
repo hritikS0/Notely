@@ -4,8 +4,8 @@ class NoteShareController {
   async createShare(req, res) {
     try {
       const { noteId, expiresAt } = req.body;
-      const ownerId = req.user.id;
-      const share = await NoteShareService.createShare(ownerId, noteId, expiresAt);
+      const userId = req.user.id;
+      const share = await NoteShareService.createShare(userId, noteId, expiresAt);
       res.status(201).json(share);
     } catch (error) {
       res.status(400).json({ message: error.message });

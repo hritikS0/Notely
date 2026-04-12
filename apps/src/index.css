@@ -1,10 +1,20 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 @import "quill/dist/quill.snow.css";
-
+@variant dark (&:where(.dark, .dark *));  
 :root {
+  color-scheme: light;
+  --bg: #f8fafc;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --card: #ffffff;
+  --accent: #e2e8f0;
+  --sidebar-width: 20rem;
+}
+
+.dark {
   color-scheme: dark;
-  --bg: #0e1116;
+  --bg: #0b0e13;
   --ink: #e6e8ec;
   --muted: #9aa3b2;
   --card: #12161d;
@@ -18,21 +28,32 @@ html, body, #root {
 body {
   font-family: "DM Sans", system-ui, -apple-system, sans-serif;
   color: var(--ink);
-  background: #0b0e13;
+  background: var(--bg);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .rich-editor .ql-toolbar.ql-snow {
-  border-color: rgba(255, 255, 255, 0.1);
-  background: #0e1116;
+  border-color: #e2e8f0;
+  background: var(--card);
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.dark .rich-editor .ql-toolbar.ql-snow {
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .rich-editor .ql-container.ql-snow {
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: #e2e8f0;
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
-  background: #0e1116;
+  background: var(--card);
+  transition: all 0.3s ease;
+}
+
+.dark .rich-editor .ql-container.ql-snow {
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .rich-editor .ql-editor {
@@ -41,22 +62,42 @@ body {
 }
 
 .rich-editor .ql-editor.ql-blank::before {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.dark .rich-editor .ql-editor.ql-blank::before {
   color: rgba(255, 255, 255, 0.35);
 }
 
 .rich-editor .ql-snow .ql-stroke {
+  stroke: #475569;
+}
+
+.dark .rich-editor .ql-snow .ql-stroke {
   stroke: rgba(255, 255, 255, 0.7);
 }
 
 .rich-editor .ql-snow .ql-fill {
+  fill: #475569;
+}
+
+.dark .rich-editor .ql-snow .ql-fill {
   fill: rgba(255, 255, 255, 0.7);
 }
 
 .rich-editor .ql-snow .ql-picker {
+  color: #475569;
+}
+
+.dark .rich-editor .ql-snow .ql-picker {
   color: rgba(255, 255, 255, 0.7);
 }
 
 .rich-editor .ql-snow .ql-picker-options {
-  background: #0e1116;
+  background: var(--card);
+  border-color: #e2e8f0;
+}
+
+.dark .rich-editor .ql-snow .ql-picker-options {
   border-color: rgba(255, 255, 255, 0.1);
 }

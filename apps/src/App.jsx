@@ -4,6 +4,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthStore } from "./store/auth.store.js";
 import AppSkeleton from "./components/AppSkeleton";
+import LandingPage from "./pages/Landing.jsx";
 
 const lazyWithPreload = (factory) => {
   const Component = React.lazy(factory);
@@ -14,6 +15,7 @@ const lazyWithPreload = (factory) => {
 const Home = lazyWithPreload(() => import("./pages/Home"));
 const Auth = lazyWithPreload(() => import("./pages/Auth"));
 const SharedNote = lazyWithPreload(() => import("./pages/SharedNote"));
+const AvatarSelection = lazyWithPreload(() => import("./pages/AvatarSelection"));
 
 const ProtectedRoutes = ({ children }) => {
   const token = useAuthStore((s) => s.token);
@@ -36,6 +38,7 @@ const App = () => {
     const preload = () => {
       Home.preload();
       SharedNote.preload();
+      AvatarSelection.preload();
     };
     if ("requestIdleCallback" in window) {
       window.requestIdleCallback(preload);
@@ -48,7 +51,14 @@ const App = () => {
       <ToastContainer position="top-right" autoClose={2500} theme="dark" />
       <Suspense fallback={<AppSkeleton />}>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route
+          path="/"
+          element={
+            <PublicOnlyRoutes>
+              <LandingPage />
+            </PublicOnlyRoutes>
+          }
+        />
         <Route
           path="/login"
           element={
@@ -73,6 +83,14 @@ const App = () => {
             </ProtectedRoutes>
           }
         />
+      <Route
+        path="/avatar"
+        element={
+          <ProtectedRoutes>
+            <AvatarSelection />
+          </ProtectedRoutes>
+        }
+      />
         <Route path="/shared/:token" element={<SharedNote />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
