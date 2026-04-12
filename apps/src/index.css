@@ -35,16 +35,21 @@ body {
 .rich-editor .ql-toolbar.ql-snow {
   border-color: #e2e8f0;
   background: var(--card);
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
   transition: all 0.3s ease;
   position: sticky;
   top: 0;
   z-index: 10;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
 }
 
 .dark .rich-editor .ql-toolbar.ql-snow {
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+.rich-editor .toolbar-toggle-bar + .ql-toolbar.ql-snow {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 .rich-editor .ql-container.ql-snow {
@@ -103,4 +108,60 @@ body {
 
 .dark .rich-editor .ql-snow .ql-picker-options {
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Mobile Optimization for Quill Text Editor Toolbar */
+@media (max-width: 768px) {
+  .ql-toolbar.ql-snow {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    padding: 8px;
+  }
+
+  .rich-editor .toolbar-toggle-bar + .ql-toolbar.ql-snow {
+    position: static;
+  }
+  
+  /* Make the buttons slightly smaller for mobile */
+  .ql-toolbar.ql-snow button {
+    width: 28px;
+    height: 28px;
+    padding: 3px;
+  }
+  
+  .ql-toolbar.ql-snow .ql-picker {
+    height: 28px;
+    line-height: 28px;
+  }
+}
+
+/* 3-Dot Menu Toggle Bar */
+.toolbar-toggle-bar {
+  background: var(--card);
+  border: 1px solid #e2e8f0;
+  border-bottom: none;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  padding: 4px 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dark .toolbar-toggle-bar {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.three-dots-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.rich-editor.toolbar-closed .ql-toolbar.ql-snow {
+  display: none;
 }

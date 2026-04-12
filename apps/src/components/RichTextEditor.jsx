@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Quill from "quill";
 
 const TOOLBAR = [
@@ -22,6 +22,32 @@ const RichTextEditor = ({
   const containerRef = useRef(null);
   const quillRef = useRef(null);
   const valueRef = useRef(value || "");
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return false;
+    return window.matchMedia("(max-width: 768px)").matches;
+  });
+  const [toolbarOpen, setToolbarOpen] = useState(() => !isMobile);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const media = window.matchMedia("(max-width: 768px)");
+
+    const apply = (matches) => {
+      setIsMobile(matches);
+      setToolbarOpen(!matches);
+    };
+
+    apply(media.matches);
+
+    const onMediaChange = (e) => apply(e.matches);
+    if (media.addEventListener) {
+      media.addEventListener("change", onMediaChange);
+      return () => media.removeEventListener("change", onMediaChange);
+    }
+
+    media.addListener(onMediaChange);
+    return () => media.removeListener(onMediaChange);
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current || quillRef.current) return;
@@ -53,9 +79,25 @@ const RichTextEditor = ({
 
   return (
     <div
-      className={`rich-editor ${className}`}
+      className={`rich-editor ${className} ${
+        isMobile ? (toolbarOpen ? "toolbar-open" : "toolbar-closed") : ""
+      }`}
       style={{ "--min-h": `${minHeight}px` }}
     >
+      {isMobile && (
+        <div className="toolbar-toggle-bar">
+          <button
+            type="button"
+            className="three-dots-btn"
+            aria-label="Formatting options"
+            aria-expanded={toolbarOpen}
+            onClick={() => setToolbarOpen((v) => !v)}
+            title="Formatting options"
+          >
+            ⋮
+          </button>
+        </div>
+      )}
       <div ref={containerRef} />
     </div>
   );
