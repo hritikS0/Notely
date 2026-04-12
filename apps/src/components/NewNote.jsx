@@ -19,14 +19,17 @@ const NewNote = ({ onCreate }) => {
   const onSubmit = async (e) => {
     if (e?.preventDefault) e.preventDefault();
     const cleanedTodos = (todos || [])
-      .map((t) => (typeof t === "string" ? t : t?.text || ""))
-      .map((text) => String(text).trim())
-      .filter(Boolean);
+      .map((t) => ({
+        text: typeof t === "string" ? t : t?.text || "",
+        completed: t?.completed || false,
+      }))
+      .map((t) => ({ ...t, text: String(t.text).trim() }))
+      .filter((t) => t.text);
     const payload = {
       ...note,
       type: noteType,
       todos: noteType === "todo" ? cleanedTodos : undefined,
-      content: noteType === "todo" ? cleanedTodos.join("\n") : note.content,
+      content: noteType === "todo" ? cleanedTodos.map(t => t.text).join("\n") : note.content,
     };
     const created = await createNotes(payload);
     if (onCreate) {

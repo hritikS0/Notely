@@ -88,7 +88,10 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
             .map((s) => s.trim())
             .filter(Boolean);
 
-    const mapped = (list || []).map((text) => ({ text, completed: false }));
+    const mapped = (list || []).map((item) => ({
+      text: typeof item === "string" ? item : item?.text || "",
+      completed: item?.completed || false,
+    }));
     setQuickTodo({ 
       todos: mapped.length ? mapped : [{ text: "", completed: false }],
       isTodoCompleted: todoSource?.isTodoCompleted || false
@@ -99,16 +102,19 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
     if (e) e.preventDefault();
     if (!draft) return;
     const cleanedTodos = (draft.todos || [])
-      .map((t) => (typeof t === "string" ? t : t?.text || ""))
-      .map((text) => String(text).trim())
-      .filter(Boolean);
+      .map((t) => ({
+        text: typeof t === "string" ? t : t?.text || "",
+        completed: t?.completed || false,
+      }))
+      .map((t) => ({ ...t, text: String(t.text).trim() }))
+      .filter((t) => t.text);
     const payload = {
       name: draft.name,
       title: draft.title,
       type: draft.type,
       todos: draft.type === "todo" ? cleanedTodos : undefined,
       content:
-        draft.type === "todo" ? cleanedTodos.join("\n") : draft.content,
+        draft.type === "todo" ? cleanedTodos.map(t => t.text).join("\n") : draft.content,
     };
     if (onUpdate) onUpdate(draft._id, payload);
   };
@@ -148,9 +154,12 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
   const handleQuickTodoSave = async (e) => {
     if (e) e.preventDefault();
     const cleanedTodos = (quickTodo.todos || [])
-      .map((t) => (typeof t === "string" ? t : t?.text || ""))
-      .map((text) => String(text).trim())
-      .filter(Boolean);
+      .map((t) => ({
+        text: typeof t === "string" ? t : t?.text || "",
+        completed: t?.completed || false,
+      }))
+      .map((t) => ({ ...t, text: String(t.text).trim() }))
+      .filter((t) => t.text);
     if (cleanedTodos.length === 0) {
       toast.error("Please add at least one task");
       return;
@@ -162,7 +171,7 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
         title: "Quick Todo",
         type: "todo",
         todos: cleanedTodos,
-        content: cleanedTodos.join("\n"),
+        content: cleanedTodos.map(t => t.text).join("\n"),
         isTodoCompleted: quickTodo.isTodoCompleted,
       };
 

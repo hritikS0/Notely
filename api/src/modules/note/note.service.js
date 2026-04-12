@@ -255,6 +255,9 @@ class NoteService {
 
     // Handle todo completion
     if (updates.type === "todo" && updates.todos) {
+      updates.todos = updates.todos.map(todo => 
+        typeof todo === 'string' ? { text: todo, completed: false } : todo
+      );
       const allCompleted = updates.todos.every(todo => todo.completed);
       updates.isTodoCompleted = allCompleted;
     }

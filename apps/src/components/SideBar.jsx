@@ -12,9 +12,17 @@ const Sidebar = ({ notes = [], selectedNoteId, onSelectNote, searchValue, onSear
     }
     return false;
   });
+  const [isMobileLocked, setIsMobileLocked] = useState(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return false;
+    return window.matchMedia("(max-width: 1023px)").matches;
+  });
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const {user} = useAuthStore(s => s);
-  const toggleCollapse = () => setIsCollapsed(!isCollapsed);
+  const collapsed = isMobileLocked ? true : isCollapsed;
+  const toggleCollapse = () => {
+    if (isMobileLocked) return;
+    setIsCollapsed((v) => !v);
+  };
   const toggleProfile = () => setIsProfileOpen(!isProfileOpen);
   const closeProfile = () => setIsProfileOpen(false);
   const avatarUrl = getAvatarUrl(user?.avatarId || user?.id || user?._id);
@@ -23,16 +31,26 @@ const Sidebar = ({ notes = [], selectedNoteId, onSelectNote, searchValue, onSear
     if (typeof document === "undefined") return;
     document.documentElement.style.setProperty(
       "--sidebar-width",
-      isCollapsed ? "5rem" : "20rem"
+      collapsed ? "5rem" : "20rem"
     );
-  }, [isCollapsed]);
+  }, [collapsed]);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 1024) setIsCollapsed(true);
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const media = window.matchMedia("(max-width: 1023px)");
+
+    const onChange = (e) => {
+      setIsMobileLocked(e.matches);
+      if (e.matches) setIsCollapsed(true);
     };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+
+    if (media.addEventListener) {
+      media.addEventListener("change", onChange);
+      return () => media.removeEventListener("change", onChange);
+    }
+
+    media.addListener(onChange);
+    return () => media.removeListener(onChange);
   }, []);
 
   const stripHtml = (html) => {
@@ -43,19 +61,21 @@ const Sidebar = ({ notes = [], selectedNoteId, onSelectNote, searchValue, onSear
   return (
     <aside
       className={`fixed left-0 top-0 z-50 flex h-full flex-col border-r border-gray-200 bg-white transition-all duration-300 ease-in-out dark:border-white/10 dark:bg-[#10141b] ${
-        isCollapsed ? "w-20" : "w-80"
+        collapsed ? "w-20" : "w-80"
       }`}
     >
       {/* Collapse Button */}
       <button
         onClick={toggleCollapse}
-        className="absolute -right-3 top-6 z-50 rounded-full border border-gray-200 bg-white dark:border-white/10 dark:bg-[#10141b] p-1 text-gray-500 hover:text-gray-900 dark:text-white/60 dark:hover:text-white transition-colors"
+        className={`absolute -right-3 top-6 z-50 rounded-full border border-gray-200 bg-white p-1 text-gray-500 transition-colors hover:text-gray-900 dark:border-white/10 dark:bg-[#10141b] dark:text-white/60 dark:hover:text-white ${
+          isMobileLocked ? "hidden" : ""
+        }`}
       >
-        {isCollapsed ? <FaChevronRight className="text-xs" /> : <FaChevronLeft className="text-xs" />}
+        {collapsed ? <FaChevronRight className="text-xs" /> : <FaChevronLeft className="text-xs" />}
       </button>
 
-      <div className={`flex flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden py-6 ${isCollapsed ? "items-center px-2" : "px-4"}`}>
-      {isCollapsed ? (
+      <div className={`flex flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden py-6 ${collapsed ? "items-center px-2" : "px-4"}`}>
+      {collapsed ? (
         <>
           {/* Logo - collapsed */}
           <div className="border-b border-gray-200 dark:border-white/10 pb-4">
@@ -183,7 +203,10 @@ const Sidebar = ({ notes = [], selectedNoteId, onSelectNote, searchValue, onSear
                   </button>
                   </div>
                   <p className="text-xs text-gray-500 dark:text-white/50 mt-1 line-clamp-2">
-                      {stripHtml(note.content || note.description) || "No content"}
+                      {note.type === "todo" && Array.isArray(note.todos) && note.todos.length > 0
+                        ? note.todos.map((t) => t?.text || "").filter(Boolean).join(", ")
+                        : stripHtml(note.content || note.description)?.replace(/\[object Object\]/g, "").trim() || "No content"
+                      }
                   </p>
                   <div className="flex items-center gap-2 mt-2">
                     {note.isShared && (
@@ -213,8 +236,8 @@ const Sidebar = ({ notes = [], selectedNoteId, onSelectNote, searchValue, onSear
       </div>
 
       {/* Fixed User Profile Footer */}
-      <div className={`relative border-t border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-[#10141b] ${isCollapsed ? "flex justify-center" : ""}`}>
-        {isCollapsed ? (
+      <div className={`relative border-t border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-[#10141b] ${collapsed ? "flex justify-center" : ""}`}>
+        {collapsed ? (
           <>
             <button onClick={toggleProfile}>
               <img 
