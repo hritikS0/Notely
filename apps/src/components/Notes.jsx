@@ -162,6 +162,90 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
     });
   };
 
+  const renderFormContent = (minHeight) => (
+    <>
+      <input
+        type="text"
+        placeholder="Name"
+        value={draft.name}
+        onChange={(e) => setDraft((prev) => prev ? { ...prev, name: e.target.value } : null)}
+        className="w-full bg-transparent text-xs font-semibold uppercase tracking-wide text-gray-600 outline-none placeholder:text-gray-400 dark:text-white/60 dark:placeholder:text-white/30"
+        onKeyDown={handleKeySave}
+      />
+      <input
+        type="text"
+        placeholder="Title"
+        value={draft.title}
+        onChange={(e) => setDraft((prev) => prev ? { ...prev, title: e.target.value } : null)}
+        className="mt-3 w-full bg-transparent text-3xl font-semibold text-gray-900 outline-none placeholder:text-gray-400 dark:text-white dark:placeholder:text-white/30"
+        onKeyDown={handleKeySave}
+      />
+
+      {draft.type === "todo" ? (
+        <div className="mt-6 space-y-3">
+          <div className="mb-2 flex items-center justify-end">
+            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-600 dark:text-white/60">
+              <input
+                type="checkbox"
+                checked={draft.isTodoCompleted || false}
+                onChange={(e) => setDraft(prev => prev ? { ...prev, isTodoCompleted: e.target.checked } : null)}
+                className="h-4 w-4 rounded border-gray-300 text-green-500 focus:ring-green-500"
+              />
+              <span className="text-xs sm:text-sm">Mark entire list as completed</span>
+            </label>
+          </div>
+          {draft.todos.map((todo, idx) => (
+            <div key={idx} className="flex items-start gap-3">
+              <button
+                type="button"
+                onClick={() => toggleTodo(idx)}
+                className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
+                  (draft.isTodoCompleted || todo.completed) ? "border-green-500 bg-green-500" : "border-gray-400 hover:border-gray-600 dark:border-white/40 dark:hover:border-white/70"
+                }`}
+              >
+                {(draft.isTodoCompleted || todo.completed) && <span className="text-[10px] text-white">✓</span>}
+              </button>
+              <input
+                type="text"
+                value={todo.text}
+                onChange={(e) => updateTodo(idx, e.target.value)}
+                placeholder={`Todo ${idx + 1}`}
+                className={`w-full bg-transparent text-sm outline-none placeholder:text-gray-400 dark:placeholder:text-white/30 sm:text-base ${(draft.isTodoCompleted || todo.completed) ? 'text-gray-400 line-through dark:text-white/40' : 'text-gray-700 dark:text-white/70'}`}
+                onKeyDown={handleKeySave}
+              />
+              <button
+                type="button"
+                onClick={() => removeTodo(idx)}
+                className="rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-500 transition-colors hover:bg-gray-100 dark:border-white/10 dark:text-white/60 dark:hover:bg-white/10 sm:px-3 sm:py-1.5"
+                aria-label="Remove todo"
+              >
+                –
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addTodo}
+            className="mt-4 w-full rounded-md border border-gray-300 bg-gray-50 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:text-white/70 dark:hover:bg-white/10 sm:py-3"
+          >
+            + Add another item
+          </button>
+        </div>
+      ) : (
+        <div className="mt-6">
+          <RichTextEditor
+            value={draft.content}
+            onChange={(value) =>
+              setDraft((prev) => prev ? { ...prev, content: value } : null)
+            }
+            placeholder="Write your note..."
+            minHeight={minHeight}
+          />
+        </div>
+      )}
+    </>
+  );
+
   const handleQuickTodoSave = async (e) => {
     if (e) e.preventDefault();
     const cleanedTodos = (quickTodo.todos || [])
@@ -289,10 +373,9 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
 
     return (
       <div className="relative flex h-full w-full flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#12161d]">
-        <div className="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-6 flex w-full items-center justify-between">
           <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-gray-500 dark:text-white/40">
             <span>Note Editor</span>
-            
             {/* Improved collaboration badge for all screen sizes */}
             {draft.isCollaborated && (
               <div className="group relative flex items-center gap-1.5 rounded-full border border-gray-300 bg-gray-100 py-0.5 pl-1 pr-2 dark:border-white/10 dark:bg-white/5">
@@ -317,88 +400,22 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
               </div>
             )}
           </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-white/70 dark:hover:bg-white/10"
+              aria-label="Close"
+              onClick={() => {
+                if (onSelectNote) onSelectNote(null);
+              }}
+            >
+              <MdClose className="text-lg sm:text-xl" />
+            </button>
+          </div>
         </div>
 
         <form key={draft._id} className="flex-1 overflow-auto pr-4" onSubmit={saveEdit}>
-          <input
-            type="text"
-            placeholder="Name"
-            value={draft.name}
-            onChange={(e) => setDraft((prev) => prev ? { ...prev, name: e.target.value } : null)}
-            className="w-full bg-transparent text-xs font-semibold uppercase tracking-wide text-gray-600 outline-none placeholder:text-gray-400 dark:text-white/60 dark:placeholder:text-white/30"
-            onKeyDown={handleKeySave}
-          />
-          <input
-            type="text"
-            placeholder="Title"
-            value={draft.title}
-            onChange={(e) => setDraft((prev) => prev ? { ...prev, title: e.target.value } : null)}
-            className="mt-3 w-full bg-transparent text-3xl font-semibold text-gray-900 outline-none placeholder:text-gray-400 dark:text-white dark:placeholder:text-white/30"
-            onKeyDown={handleKeySave}
-          />
-
-          {draft.type === "todo" ? (
-            <div className="mt-6 space-y-3">
-              <div className="flex items-center justify-end mb-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-white/60 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={draft.isTodoCompleted || false}
-                    onChange={(e) => setDraft(prev => prev ? { ...prev, isTodoCompleted: e.target.checked } : null)}
-                    className="h-4 w-4 rounded border-gray-300 text-green-500 focus:ring-green-500"
-                  />
-                  <span className="text-xs sm:text-sm">Mark entire list as completed</span>
-                </label>
-              </div>
-              {draft.todos.map((todo, idx) => (
-                <div key={idx} className="flex items-start gap-3">
-                  <button
-                    type="button"
-                    onClick={() => toggleTodo(idx)}
-                    className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
-                      (draft.isTodoCompleted || todo.completed) ? "border-green-500 bg-green-500" : "border-gray-400 hover:border-gray-600 dark:border-white/40 dark:hover:border-white/70"
-                    }`}
-                  >
-                    {(draft.isTodoCompleted || todo.completed) && <span className="text-[10px] text-white">✓</span>}
-                  </button>
-                  <input
-                    type="text"
-                    value={todo.text}
-                    onChange={(e) => updateTodo(idx, e.target.value)}
-                    placeholder={`Todo ${idx + 1}`}
-                    className={`w-full bg-transparent text-sm sm:text-base outline-none placeholder:text-gray-400 dark:placeholder:text-white/30 ${(draft.isTodoCompleted || todo.completed) ? 'text-gray-400 line-through dark:text-white/40' : 'text-gray-700 dark:text-white/70'}`}
-                    onKeyDown={handleKeySave}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeTodo(idx)}
-                    className="rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-500 transition-colors hover:bg-gray-100 dark:border-white/10 dark:text-white/60 dark:hover:bg-white/10 sm:px-3 sm:py-1.5"
-                    aria-label="Remove todo"
-                  >
-                    –
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={addTodo}
-                className="mt-4 w-full rounded-md border border-gray-300 bg-gray-50 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:text-white/70 dark:hover:bg-white/10 sm:py-3"
-              >
-                + Add another item
-              </button>
-            </div>
-          ) : (
-            <div className="mt-6">
-              <RichTextEditor
-                value={draft.content}
-                onChange={(value) =>
-                  setDraft((prev) => prev ? { ...prev, content: value } : null)
-                }
-                placeholder="Write your note..."
-                minHeight={400}
-              />
-            </div>
-          )}
+          {renderFormContent(400)}
         </form>
 
         <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-gray-100 pt-4 dark:border-white/10 sm:w-auto">
@@ -437,32 +454,24 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
           >
             Save
           </button>
-          <button
-            type="button"
-            className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-white/70 dark:hover:bg-white/10"
-            aria-label="Close"
-            onClick={() => {
-              if (onSelectNote) onSelectNote(null);
-            }}
-          >
-            <MdClose className="text-lg sm:text-xl" />
-          </button>
+          
         </div>
       </div>
     );
   };
 
   return (
-    <div className={`grid w-full grid-cols-1 gap-4 sm:gap-6 ${showQuickTodo ? "lg:grid-cols-[minmax(0,1fr)_360px]" : "lg:grid-cols-1"}`}>
+    <>
+      <div className={`grid h-full w-full grid-cols-1 gap-4 sm:gap-6 ${showQuickTodo ? "lg:grid-cols-[minmax(0,1fr)_360px]" : "lg:grid-cols-1"}`}>
       {/* Note Editor - fills remaining space */}
-      <div className="min-w-0">
-        <div className="h-[60vh] min-h-[400px] lg:h-[calc(100vh-200px)]">
+      <div className="min-w-0 h-full">
+        <div className="h-full">
           {renderEditorOrEmpty()}
         </div>
       </div>
 
       {/* Mobile Quick Todo Toggle */}
-      <div className="lg:hidden">
+      <div className="lg:hidden shrink-0">
         <button
           type="button"
           onClick={() => setShowQuickTodo(!showQuickTodo)}
@@ -473,12 +482,20 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
       </div>
 
       {/* Quick Todo - stays to the right on desktop, hidden/shown on mobile */}
-      <div className={`${showQuickTodo ? "block" : "hidden"}`}>
-        <div className="sticky top-4 flex h-[50vh] min-h-[400px] w-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-2xl dark:border-white/10 dark:bg-[#12161d] sm:p-6 lg:h-[calc(100vh-200px)]">
+      <div className={`${showQuickTodo ? "block" : "hidden"} h-full`}>
+        <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-2xl dark:border-white/10 dark:bg-[#12161d] sm:p-6">
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-gray-500 dark:text-white/40">
               <span>Quick Todo</span>
             </div>
+            <button
+              type="button"
+              onClick={() => setShowQuickTodo(false)}
+              className="hidden items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-white/70 dark:hover:bg-white/10 lg:flex"
+              aria-label="Hide Quick Todo"
+            >
+              <MdClose className="text-lg" />
+            </button>
           </div>
           
           <form className="flex-1 overflow-auto" onSubmit={handleQuickTodoSave}>
@@ -546,18 +563,11 @@ const Notes = ({ note, isLoading, onUpdate, onDelete, selectedNoteId, onSelectNo
             >
               Save
             </button>
-            <button
-              type="button"
-              onClick={() => setShowQuickTodo(false)}
-              className="hidden items-center justify-center rounded-md border border-transparent p-1.5 text-gray-400 transition-colors hover:bg-gray-100 dark:text-white/40 dark:hover:bg-white/10 lg:flex"
-              aria-label="Hide Quick Todo"
-            >
-              <MdClose className="text-lg" />
-            </button>
           </div>
         </div>
       </div>
     </div>
+    </>
   );
 };
 
